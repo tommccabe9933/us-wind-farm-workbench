@@ -559,9 +559,9 @@ with tab1:
 
         gb = GridOptionsBuilder.from_dataframe(ag_df)
         gb.configure_default_column(
-            sortable=True, filterable=True, resizable=True,
+            sortable=True, filter=True, resizable=True,
             minWidth=70, wrapHeaderText=False, autoHeaderHeight=False,
-            suppressMenu=True,
+            suppressHeaderMenuButton=True,
         )
 
         # Configure each column with width and tooltip
