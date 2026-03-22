@@ -22,6 +22,57 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------------------------
+# Welcome dialog — shown once per session
+# ---------------------------------------------------------------------------
+@st.dialog("U.S. Wind Farm Workbench")
+def welcome_dialog():
+    st.markdown(
+        '<div style="text-align:center;padding:8px 0 16px;">'
+        '<span style="font-size:40px;">⚡</span>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "**Screening every utility-scale wind farm in the United States.**"
+    )
+    st.markdown(
+        "This workbench covers **1,086 wind plants** with nameplate capacity "
+        "≥ 10 MW — representing virtually the entire U.S. utility-scale wind fleet."
+    )
+    st.markdown("---")
+    st.markdown(
+        '<p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#6B7280;margin-bottom:8px;">'
+        'Data Sources</p>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "| Source | Publisher | Coverage |\n"
+        "|--------|-----------|----------|\n"
+        "| EIA Form 860 | U.S. Energy Information Administration | Plant identity, capacity, ownership |\n"
+        "| EIA Form 923 | U.S. Energy Information Administration | Annual generation 2018–2024 |\n"
+        "| Electric Power Monthly | U.S. Energy Information Administration | Monthly generation 2025 |\n"
+        "| U.S. Wind Turbine Database | U.S. Geological Survey | Turbine count, age, manufacturer |\n"
+        "| eGRID | U.S. Environmental Protection Agency | NERC region assignment |"
+    )
+    st.markdown("")
+    st.markdown(
+        '<div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:4px;padding:12px;margin:8px 0;">'
+        '<p style="font-size:12px;color:#4A5D23;margin:0;font-weight:600;">'
+        '100% Federal Government Data · Zero AI-Generated Values</p>'
+        '<p style="font-size:11px;color:#6B7280;margin:4px 0 0;">Every number can be verified '
+        'at the linked government source. No estimates, no predictions, no machine learning.</p>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown("")
+    if st.button("Enter Workbench", use_container_width=True, type="primary"):
+        st.session_state["welcome_dismissed"] = True
+        st.rerun()
+
+if "welcome_dismissed" not in st.session_state:
+    welcome_dialog()
+
+# ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 OLIVE = "#4A5D23"
