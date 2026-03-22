@@ -1,0 +1,33 @@
+# Data (too large for git)
+windfarm_screener/data/raw/
+windfarm_screener/data/processed/
+windfarm_screener/outputs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Backups
+*.bak
+
+# Env files
+.env
+*.env
+
+# gstack logs
+.gstack/browse-*.log
