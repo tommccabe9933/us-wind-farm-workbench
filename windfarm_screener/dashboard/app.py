@@ -572,35 +572,17 @@ with tab1:
                     extra["pinned"] = "left"
                     extra["maxWidth"] = 400
                     extra["cellRenderer"] = JsCode("""
-                        class PlantNameRenderer {
-                            init(params) {
-                                this.eGui = document.createElement('span');
-                                this.eGui.innerText = params.value || '';
-                                this.eGui.style.cursor = 'pointer';
-                                this.eGui.style.color = '#1A1A1A';
-                                this.eGui.style.fontWeight = '500';
-                                this.eGui.style.textDecoration = 'underline';
-                                this.eGui.style.textDecorationColor = '#9CA3AF';
-                            }
-                            getGui() { return this.eGui; }
+                        function(params) {
+                            return '<span style="cursor:pointer;color:#1A1A1A;font-weight:500;text-decoration:underline;text-decoration-color:#9CA3AF;">' + (params.value || '') + '</span>';
                         }
                     """)
                 elif col_key == "eia_browser_url":
                     extra["cellRenderer"] = JsCode("""
-                        class UrlRenderer {
-                            init(params) {
-                                this.eGui = document.createElement('a');
-                                if (params.value) {
-                                    this.eGui.href = params.value;
-                                    this.eGui.innerText = 'View on EIA';
-                                    this.eGui.target = '_blank';
-                                    this.eGui.style.color = '#4A5D23';
-                                    this.eGui.style.textDecoration = 'underline';
-                                } else {
-                                    this.eGui.innerText = '';
-                                }
+                        function(params) {
+                            if (params.value) {
+                                return '<a href="' + params.value + '" target="_blank" style="color:#4A5D23;text-decoration:underline;">View on EIA</a>';
                             }
-                            getGui() { return this.eGui; }
+                            return '';
                         }
                     """)
                 gb.configure_column(header, **extra)
