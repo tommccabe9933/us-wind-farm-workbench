@@ -477,6 +477,8 @@ with tab1:
         for col in ["cf_regional_percentile", "national_pctile"]:
             if col in display_df.columns:
                 display_df[col] = display_df[col].apply(lambda v: "" if pd.isna(v) else f"{v:.0f}")
+        if "turbine_manufacturer" in display_df.columns:
+            display_df["turbine_manufacturer"] = display_df["turbine_manufacturer"].fillna("").replace("nan", "")
 
         # Column config — all TextColumns since data is pre-formatted
         col_config = {
