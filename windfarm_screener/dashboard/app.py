@@ -9,7 +9,7 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from pathlib import Path
-from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -89,12 +89,19 @@ st.markdown("""
         text-transform: uppercase; letter-spacing: 0.8px; }
     [data-testid="stMetricDelta"] { font-size: 11px; }
 
-    /* Dataframe */
+    /* Dataframe — black header bar appearance via dark theme overlay */
     .stDataFrame { border: 1px solid #E5E7EB; border-radius: 4px; }
-
-    /* glide-data-grid header styling (canvas-based — limited CSS reach) */
     [data-testid="stDataFrameResizable"] { border: 1px solid #E5E7EB; border-radius: 4px; }
     [data-testid="stDataFrameResizable"] canvas { border-radius: 4px; }
+
+    /* st.dataframe table headers (HTML-based tables used by Streamlit) */
+    .stDataFrame table thead tr { background-color: #000000 !important; }
+    .stDataFrame table thead th {
+        background-color: #000000 !important; color: #FFFFFF !important;
+        font-weight: 600 !important; font-size: 11px !important;
+        text-transform: uppercase !important; letter-spacing: 0.3px !important;
+        border-bottom: 2px solid #333 !important;
+    }
 
     /* Cards */
     .info-card { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 4px;
@@ -140,8 +147,8 @@ PLOTLY_LAYOUT = dict(
     plot_bgcolor="#FFFFFF",
     paper_bgcolor="#FFFFFF",
     font=dict(family="Inter, -apple-system, BlinkMacSystemFont, sans-serif", size=12, color="#1A1A1A"),
-    margin=dict(t=40, b=40, l=60, r=40),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
+    margin=dict(t=80, b=40, l=60, r=40),
+    legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5,
                 font=dict(size=11), bgcolor="rgba(0,0,0,0)"),
     hoverlabel=dict(bgcolor="#1A1A1A", font_size=12, font_color="white"),
 )
@@ -336,7 +343,6 @@ with st.sidebar:
 
     st.markdown("### Distress Signals")
     flag_filters = [
-        ("Declining 3-year average", "flag_declining_3yr"),
         ("Bottom quartile in region", "flag_bottom_quartile"),
         ("15%+ below peak generation", "flag_below_peak"),
         ("3+ consecutive years of decline", "flag_consecutive_decline"),
@@ -409,7 +415,7 @@ with tab1:
             # Identity + Owner
             "plant_name", "owner_display", "state", "nerc_region",
             # Physical Facts
-            "turbine_count", "asset_age", "turbine_age",
+            "turbine_count", "turbine_manufacturer", "asset_age", "turbine_age",
             # Capacity & Generation
             "potential_gen_mwh_2024", "gen_mwh_2024",
             # Capacity Factors
@@ -421,8 +427,6 @@ with tab1:
             # Peer comparison
             "regional_median_cf", "underperformance_gap",
             "cf_regional_percentile", "national_pctile",
-            # Trend
-            "trend_direction",
             # Owner portfolio
             "owner_plant_count",
             # Signals
@@ -526,31 +530,33 @@ with tab1:
         }
 
         # Column display config: short header name + full tooltip
+        # Column display config: (header_name, tooltip, min_width)
+        # Rule: minWidth = max(header text width in px, 120).
+        # At 11px uppercase font, ~8px per char + 40px for filter icon + padding.
         _col_cfg = {
-            # (header_name, tooltip, min_width)
-            "plant_name": ("Plant Name", "EIA Form 860", 240),
-            "owner_display": ("Owner", "Plant owner or operating utility. Source: EIA Form 860", 180),
-            "state": ("State", "Source: EIA Form 860", 70),
-            "nerc_region": ("NERC", "North American Electric Reliability Corporation region. Source: EPA eGRID", 70),
-            "turbine_count": ("Turbines", "Source: U.S. Wind Turbine Database (USWTDB)", 90),
-            "asset_age": ("Age (yrs)", "Plant age in years. Formula: 2024 − commissioning year. Source: EIA Form 860", 80),
-            "turbine_age": ("Turb Age", "Turbine age in years. Source: USWTDB", 80),
-            "potential_gen_mwh_2024": ("Capacity MWh/yr", "Nameplate Capacity (MW) × 8,760 hrs. Source: EIA-860", 140),
-            "gen_mwh_2024": ("Gen 2024 MWh", "Actual generation in 2024. Source: EIA Form 923", 130),
-            "cf_2024": ("CF 2024", "Capacity Factor 2024. Formula: Actual ÷ Potential. Source: EIA-923 / EIA-860", 90),
-            "cf_2025": ("CF 2025", "Capacity Factor 2025 (Preliminary). Source: EIA Electric Power Monthly", 90),
-            "cf_3yr_2022_2024": ("CF 3yr Avg", "Capacity Factor 3-Year Average (2022-2024). Source: EIA-923", 100),
-            "yoy_3yr_avg": ("YoY 3yr", "Generation change year-over-year (3-year avg). Source: EIA-923", 85),
-            "gen_change_2025_vs_2024": ("2025 vs 2024 Chg", "2025 vs 2024 production change (%). Source: EIA-923 + EPM", 120),
-            "regional_median_cf": ("Region Median", "NERC region median capacity factor. Source: EIA-923 + EPA eGRID", 110),
-            "underperformance_gap": ("Gap vs Region", "Gap vs. NERC region median (pp). Negative = underperforming. Source: EIA-923", 100),
-            "cf_regional_percentile": ("Region Pctile", "CF percentile within NERC region. 0=worst, 100=best", 100),
-            "national_pctile": ("Nat'l Pctile", "CF percentile nationally. 0=worst, 100=best", 100),
-            "trend_direction": ("Trend", "3-year generation trend: Declining / Stable / Improving", 100),
-            "owner_plant_count": ("Portfolio", "Number of wind plants owned by same entity", 80),
-            "distress_signal_count": ("Distress (of 10)", "Distress signals triggered (of 10)", 100),
-            "ptc_status": ("PTC Status", "Production Tax Credit status: Active / Expiring / Expired", 90),
-            "eia_browser_url": ("EIA Link", "Click to verify on EIA website", 110),
+            "plant_name":              ("Plant Name",           "EIA Form 860", 300),
+            "owner_display":           ("Owner",                "Plant owner or operating utility. Source: EIA Form 860", 250),
+            "state":                   ("State",                "Source: EIA Form 860", 100),
+            "nerc_region":             ("NERC Region",          "North American Electric Reliability Corporation region. Source: EPA eGRID", 160),
+            "turbine_count":           ("Turbines",             "Source: U.S. Wind Turbine Database (USWTDB)", 130),
+            "turbine_manufacturer":    ("Manufacturer",         "Turbine manufacturer (most common at site). Source: USWTDB", 180),
+            "asset_age":               ("Age (Years)",          "Plant age in years. Formula: 2024 − commissioning year. Source: EIA Form 860", 140),
+            "turbine_age":             ("Turbine Age",          "Turbine age in years. Source: USWTDB", 150),
+            "potential_gen_mwh_2024":  ("Capacity MWh/yr",      "Nameplate Capacity (MW) × 8,760 hrs. Source: EIA-860", 190),
+            "gen_mwh_2024":            ("Gen 2024 MWh",         "Actual generation in 2024. Source: EIA Form 923", 180),
+            "cf_2024":                 ("CF 2024",              "Capacity Factor 2024. Formula: Actual ÷ Potential. Source: EIA-923 / EIA-860", 130),
+            "cf_2025":                 ("CF 2025",              "Capacity Factor 2025 (Preliminary). Source: EIA Electric Power Monthly", 130),
+            "cf_3yr_2022_2024":        ("CF 3yr Avg",           "Capacity Factor 3-Year Average (2022-2024). Source: EIA-923", 150),
+            "yoy_3yr_avg":             ("YoY 3yr Avg",          "Generation change year-over-year (3-year avg). Source: EIA-923", 160),
+            "gen_change_2025_vs_2024": ("2025 vs 2024 Change",  "2025 vs 2024 production change (%). Source: EIA-923 + EPM", 210),
+            "regional_median_cf":      ("Region Median CF",     "NERC region median capacity factor. Source: EIA-923 + EPA eGRID", 190),
+            "underperformance_gap":    ("Gap vs Region",        "Gap vs. NERC region median (pp). Negative = underperforming. Source: EIA-923", 170),
+            "cf_regional_percentile":  ("Region Percentile",    "CF percentile within NERC region. 0=worst, 100=best", 200),
+            "national_pctile":         ("National Percentile",  "CF percentile nationally. 0=worst, 100=best", 210),
+            "owner_plant_count":       ("Portfolio Size",       "Number of wind plants owned by same entity", 160),
+            "distress_signal_count":   ("Distress Signals",     "Distress signals triggered (of 10)", 190),
+            "ptc_status":              ("PTC Status",           "Production Tax Credit status. Active: age<10, Expiring: 10-12, Expired: age>12", 150),
+            "eia_browser_url":         ("EIA Link",             "Click to verify on EIA website", 150),
         }
 
         # Rename columns for display
@@ -560,7 +566,7 @@ with tab1:
         gb = GridOptionsBuilder.from_dataframe(ag_df)
         gb.configure_default_column(
             sortable=True, filter=True, resizable=True,
-            minWidth=70, wrapHeaderText=False, autoHeaderHeight=False,
+            minWidth=130, wrapHeaderText=False, autoHeaderHeight=False,
             suppressHeaderMenuButton=True,
         )
 
@@ -570,21 +576,7 @@ with tab1:
                 extra = {"headerTooltip": tooltip, "minWidth": min_w}
                 if col_key == "plant_name":
                     extra["pinned"] = "left"
-                    extra["maxWidth"] = 400
-                    extra["cellRenderer"] = JsCode("""
-                        function(params) {
-                            return '<span style="cursor:pointer;color:#1A1A1A;font-weight:500;text-decoration:underline;text-decoration-color:#9CA3AF;">' + (params.value || '') + '</span>';
-                        }
-                    """)
-                elif col_key == "eia_browser_url":
-                    extra["cellRenderer"] = JsCode("""
-                        function(params) {
-                            if (params.value) {
-                                return '<a href="' + params.value + '" target="_blank" style="color:#4A5D23;text-decoration:underline;">View on EIA</a>';
-                            }
-                            return '';
-                        }
-                    """)
+                    extra["maxWidth"] = 450
                 gb.configure_column(header, **extra)
 
         gb.configure_selection(selection_mode="single", use_checkbox=False)
@@ -607,12 +599,12 @@ with tab1:
             ".ag-row-hover": {"background-color": "#F0F4E8 !important"},
             ".ag-cell": {"font-size": "12px !important", "color": "#1A1A1A !important", "font-family": "'Inter', -apple-system, sans-serif !important"},
             ".ag-root-wrapper": {"border": "1px solid #E5E7EB !important", "border-radius": "4px !important"},
+            ".ag-pinned-left-cols-container .ag-cell": {"font-weight": "500 !important", "cursor": "pointer !important"},
         }
 
         grid_response = AgGrid(
             ag_df, gridOptions=grid_options, custom_css=custom_css,
             height=650, theme="alpine",
-            allow_unsafe_jscode=True,
             update_mode="SELECTION_CHANGED",
         )
 
@@ -625,7 +617,15 @@ with tab1:
                 selected_name = selected_rows[0].get("Plant Name", "")
             if selected_name:
                 st.session_state["selected_plant"] = selected_name
-                st.info(f"**{selected_name}** selected — click the **PLANT DETAIL** tab above to view full analysis.")
+                # Auto-click the Plant Detail tab via JS (using html component which allows scripts)
+                import streamlit.components.v1 as components
+                components.html(
+                    """<script>
+                    const tabs = window.parent.document.querySelectorAll('[data-baseweb="tab"]');
+                    if (tabs.length > 1) { tabs[1].click(); }
+                    </script>""",
+                    height=0,
+                )
 
         # Column definitions
         with st.expander("Column Definitions"):
@@ -689,13 +689,13 @@ with tab2:
     else:
         plant_names = sorted(filtered["plant_name"].dropna().unique().tolist())
 
-        default_idx = 0
+        # Sync row selection from screener table into the selectbox widget
         if "selected_plant" in st.session_state:
             sel = st.session_state["selected_plant"]
-            if sel in plant_names:
-                default_idx = plant_names.index(sel)
+            if sel in plant_names and st.session_state.get("plant_select") != sel:
+                st.session_state["plant_select"] = sel
 
-        selected_plant = st.selectbox("Select a plant", plant_names, index=default_idx, key="plant_select")
+        selected_plant = st.selectbox("Select a plant", plant_names, key="plant_select")
 
         plant_row = filtered[filtered["plant_name"] == selected_plant]
         if plant_row.empty:
@@ -896,12 +896,17 @@ with tab2:
                                     line=dict(color="#6B7280", width=1.5, dash="dash"),
                                     hoverinfo="skip",
                                 ))
+                        scatter_layout = {k: v for k, v in PLOTLY_LAYOUT.items() if k not in ("margin", "legend")}
                         fig.update_layout(
-                            **PLOTLY_LAYOUT, height=400,
-                            title=f"Age vs. Capacity Factor — {region_name}",
+                            **scatter_layout, height=500,
+                            title=dict(text=f"Age vs. Capacity Factor — {region_name}",
+                                       font=dict(size=14), x=0, xanchor="left"),
                             xaxis=dict(title="Plant Age (Years)", **AXIS_STYLE),
-                            yaxis=dict(title="Capacity Factor (%)", **AXIS_STYLE),
+                            yaxis=dict(title="Capacity Factor (%)", **AXIS_STYLE, range=[0, 65]),
                             showlegend=True,
+                            margin=dict(t=40, b=80, l=60, r=40),
+                            legend=dict(orientation="h", yanchor="top", y=-0.15,
+                                        xanchor="center", x=0.5, font=dict(size=10)),
                         )
                         st.plotly_chart(fig, use_container_width=True)
 
@@ -1039,57 +1044,69 @@ with tab2:
                         lambda v: f"{v:,.0f}" if pd.notna(v) else "")
                     st.dataframe(mdf_display, hide_index=True, use_container_width=True)
 
-            # Month-over-Month: 2025 vs Same Month 2024
-            if "gen_mwh_2025_01" in df.columns and "gen_mwh_2024_01" in df.columns:
+            # Month-over-Month: All Available Years
+            # Detect which years have monthly data for this plant
+            all_years = []
+            for yr in range(2018, 2030):
+                col_test = f"gen_mwh_{yr}_01"
+                if col_test in df.columns and pd.notna(plant.get(col_test)):
+                    all_years.append(yr)
+
+            if len(all_years) >= 1:
+                month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
                 mom_data = []
-                month_names = ["January", "February", "March", "April", "May", "June",
-                               "July", "August", "September", "October", "November", "December"]
                 for m in range(1, 13):
-                    col_25 = f"gen_mwh_2025_{m:02d}"
-                    col_24 = f"gen_mwh_2024_{m:02d}"
-                    val_25 = plant.get(col_25)
-                    val_24 = plant.get(col_24)
-                    if pd.notna(val_25) and pd.notna(val_24):
-                        change = ((val_25 - val_24) / val_24 * 100) if val_24 > 0 else None
-                        mom_data.append({
-                            "Month": month_names[m-1],
-                            "2024 Generation (MWh)": val_24,
-                            "2025 Generation (MWh)": val_25,
-                            "Change vs. Prior Year": change,
-                        })
+                    row = {"Month": month_names[m-1]}
+                    for yr in all_years:
+                        col = f"gen_mwh_{yr}_{m:02d}"
+                        val = plant.get(col)
+                        row[str(yr)] = val if pd.notna(val) else None
+                    # Only add row if at least one year has data
+                    if any(row.get(str(yr)) is not None for yr in all_years):
+                        mom_data.append(row)
 
                 if mom_data:
-                    st.markdown("### Month-over-Month: 2025 vs 2024")
-                    st.markdown("_Each month's generation compared to the same month in the prior year._")
+                    st.markdown("### Monthly Generation History")
+                    st.markdown("_Monthly generation (MWh) across all available years. Compare same-month performance over time._")
                     mom_df = pd.DataFrame(mom_data)
 
-                    # Chart: side-by-side bars
+                    # Chart: line chart with all years
                     fig = go.Figure()
-                    fig.add_trace(go.Bar(
-                        x=mom_df["Month"], y=mom_df["2024 Generation (MWh)"],
-                        name="2024", marker_color="#B8C9A3",
-                        hovertemplate="%{x} 2024: %{y:,.0f} MWh<extra></extra>",
-                    ))
-                    fig.add_trace(go.Bar(
-                        x=mom_df["Month"], y=mom_df["2025 Generation (MWh)"],
-                        name="2025", marker_color="#4A5D23",
-                        hovertemplate="%{x} 2025: %{y:,.0f} MWh<extra></extra>",
-                    ))
+                    olive_shades = ["#D4DCC4", "#B8C9A3", "#9CB682", "#7FA361", "#638F40", "#4A5D23", "#2D3A14", "#1A2200"]
+                    for i, yr in enumerate(all_years):
+                        yr_col = str(yr)
+                        if yr_col in mom_df.columns:
+                            vals = mom_df[yr_col].dropna()
+                            if len(vals) > 0:
+                                color = olive_shades[min(i, len(olive_shades)-1)]
+                                is_latest = (yr == all_years[-1])
+                                width = 4 if is_latest else 2.5
+                                fig.add_trace(go.Scatter(
+                                    x=mom_df["Month"], y=mom_df[yr_col],
+                                    mode="lines+markers", name=yr_col,
+                                    line=dict(color=color, width=width),
+                                    marker=dict(size=8 if is_latest else 5),
+                                    hovertemplate=f"%{{x}} {yr}: %{{y:,.0f}} MWh<extra></extra>",
+                                ))
+                    monthly_layout = {k: v for k, v in PLOTLY_LAYOUT.items() if k not in ("margin", "legend")}
                     fig.update_layout(
-                        **PLOTLY_LAYOUT, height=350, barmode="group",
+                        **monthly_layout, height=550,
                         yaxis=dict(title="Generation (MWh)", **AXIS_STYLE),
                         xaxis=AXIS_STYLE, showlegend=True,
+                        legend=dict(orientation="h", yanchor="top", y=-0.1,
+                                    xanchor="center", x=0.5, font=dict(size=11)),
+                        margin=dict(t=20, b=80, l=60, r=20),
                     )
                     st.plotly_chart(fig, use_container_width=True)
 
-                    # Table
+                    # Table: formatted
                     mom_display = mom_df.copy()
-                    mom_display["2024 Generation (MWh)"] = mom_display["2024 Generation (MWh)"].apply(
-                        lambda v: f"{v:,.0f}" if pd.notna(v) else "")
-                    mom_display["2025 Generation (MWh)"] = mom_display["2025 Generation (MWh)"].apply(
-                        lambda v: f"{v:,.0f}" if pd.notna(v) else "")
-                    mom_display["Change vs. Prior Year"] = mom_display["Change vs. Prior Year"].apply(
-                        lambda v: f"{v:+.1f}%" if pd.notna(v) else "")
+                    for yr in all_years:
+                        yr_col = str(yr)
+                        if yr_col in mom_display.columns:
+                            mom_display[yr_col] = mom_display[yr_col].apply(
+                                lambda v: f"{v:,.0f}" if pd.notna(v) else "—")
                     st.dataframe(mom_display, hide_index=True, use_container_width=True)
 
             # Distress Signals

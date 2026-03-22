@@ -31,3 +31,4 @@ Thumbs.db
 
 # gstack logs
 .gstack/browse-*.log
+.gstack/
