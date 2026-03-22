@@ -1,7 +1,9 @@
-# Data (too large for git)
+# Raw data (too large for git)
 windfarm_screener/data/raw/
-windfarm_screener/data/processed/
 windfarm_screener/outputs/
+
+# Processed data — committed for deployment (~3MB)
+# windfarm_screener/data/processed/
 
 # Python
 __pycache__/
