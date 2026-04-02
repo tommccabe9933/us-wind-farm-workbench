@@ -9,7 +9,7 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from pathlib import Path
-from st_aggrid import AgGrid, GridOptionsBuilder
+# AgGrid removed — using native st.dataframe for Cloud compatibility
 
 # ---------------------------------------------------------------------------
 # Page config
@@ -625,74 +625,43 @@ with tab1:
 
         # Rename columns for display
         rename_map = {c: _col_cfg[c][0] for c in display_df.columns if c in _col_cfg}
-        ag_df = display_df.rename(columns=rename_map)
+        table_df = display_df.rename(columns=rename_map)
 
-        gb = GridOptionsBuilder.from_dataframe(ag_df)
-        gb.configure_default_column(
-            sortable=True, filter=True, resizable=True,
-            minWidth=130, wrapHeaderText=False, autoHeaderHeight=False,
-            suppressHeaderMenuButton=True,
+        # Build column_config from _col_cfg for st.dataframe
+        col_config = {}
+        for col_key, (header, tooltip, min_w) in _col_cfg.items():
+            if header in table_df.columns:
+                if col_key == "eia_browser_url":
+                    col_config[header] = st.column_config.LinkColumn(
+                        header, display_text="View on EIA", help=tooltip, width=min_w,
+                    )
+                else:
+                    col_config[header] = st.column_config.Column(
+                        header, help=tooltip, width=min_w,
+                    )
+
+        # Row selection via st.dataframe
+        event = st.dataframe(
+            table_df, height=650, hide_index=True,
+            column_config=col_config,
+            on_select="rerun", selection_mode="single-row",
+            use_container_width=True,
         )
 
-        # Configure each column with width and tooltip
-        for col_key, (header, tooltip, min_w) in _col_cfg.items():
-            if header in ag_df.columns:
-                extra = {"headerTooltip": tooltip, "minWidth": min_w}
-                if col_key == "plant_name":
-                    extra["pinned"] = "left"
-                    extra["maxWidth"] = 450
-                gb.configure_column(header, **extra)
-
-        gb.configure_selection(selection_mode="single", use_checkbox=False)
-        grid_options = gb.build()
-
-        # Custom CSS for black headers — must use custom_css param (iframe)
-        custom_css = {
-            "#gridToolBar": {"display": "none"},
-            ".ag-header": {"background-color": "#000000 !important", "border-bottom": "2px solid #333333 !important"},
-            ".ag-header-row": {"background-color": "#000000 !important", "color": "#FFFFFF !important"},
-            ".ag-header-cell": {"background-color": "#000000 !important", "color": "#FFFFFF !important", "font-size": "11px !important", "font-weight": "600 !important", "text-transform": "uppercase !important", "letter-spacing": "0.3px !important"},
-            ".ag-header-cell-text": {"color": "#FFFFFF !important"},
-            ".ag-header-cell-label .ag-header-cell-text": {"color": "#FFFFFF !important"},
-            ".ag-header-viewport": {"background-color": "#000000 !important"},
-            ".ag-pinned-left-header": {"background-color": "#000000 !important"},
-            ".ag-header-cell-resize": {"background-color": "#000000 !important"},
-            ".ag-icon": {"color": "#FFFFFF !important"},
-            ".ag-row-even": {"background-color": "#FFFFFF !important"},
-            ".ag-row-odd": {"background-color": "#F9FAFB !important"},
-            ".ag-row-hover": {"background-color": "#F0F4E8 !important"},
-            ".ag-cell": {"font-size": "12px !important", "color": "#1A1A1A !important", "font-family": "'IBM Plex Mono', 'IBM Plex Sans', sans-serif !important"},
-            ".ag-root-wrapper": {"border": "1px solid #E5E7EB !important", "border-radius": "4px !important"},
-            ".ag-pinned-left-cols-container .ag-cell": {"font-weight": "500 !important", "cursor": "pointer !important"},
-        }
-
-        try:
-            grid_response = AgGrid(
-                ag_df, gridOptions=grid_options, custom_css=custom_css,
-                height=650, theme="alpine",
-                update_mode="SELECTION_CHANGED",
-            )
-
-            # Handle row selection for cross-tab navigation
-            selected_rows = grid_response.get("selected_rows", None)
-            if selected_rows is not None and len(selected_rows) > 0:
-                if isinstance(selected_rows, pd.DataFrame):
-                    selected_name = selected_rows.iloc[0].get("Plant Name", "")
-                else:
-                    selected_name = selected_rows[0].get("Plant Name", "")
-                if selected_name:
-                    st.session_state["selected_plant"] = selected_name
-                    import streamlit.components.v1 as components
-                    components.html(
-                        """<script>
-                        const tabs = window.parent.document.querySelectorAll('[data-baseweb="tab"]');
-                        if (tabs.length > 1) { tabs[1].click(); }
-                        </script>""",
-                        height=0,
-                    )
-        except Exception as e:
-            st.warning(f"Interactive table unavailable: {e}")
-            st.dataframe(ag_df, height=650, use_container_width=True, hide_index=True)
+        # Handle row selection for cross-tab navigation
+        if event and event.selection and event.selection.rows:
+            row_idx = event.selection.rows[0]
+            selected_name = table_df.iloc[row_idx].get("Plant Name", "")
+            if selected_name:
+                st.session_state["selected_plant"] = selected_name
+                import streamlit.components.v1 as components
+                components.html(
+                    """<script>
+                    const tabs = window.parent.document.querySelectorAll('[data-baseweb="tab"]');
+                    if (tabs.length > 1) { tabs[1].click(); }
+                    </script>""",
+                    height=0,
+                )
 
         # Column definitions
         with st.expander("Column Definitions"):
