@@ -100,10 +100,10 @@ NERC_FULL_NAMES = {
 # ---------------------------------------------------------------------------
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
     /* Global */
-    .stApp { background-color: #FFFFFF; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    .stApp { background-color: #FFFFFF; font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
     section[data-testid="stSidebar"] { background-color: #F7F8FA; border-right: 1px solid #E5E7EB; }
     section[data-testid="stSidebar"] .stMarkdown h3 {
         color: #1A1A1A; font-size: 11px; font-weight: 700;
@@ -138,7 +138,7 @@ st.markdown("""
 
     /* Metrics */
     [data-testid="stMetricValue"] { font-size: 20px; font-weight: 700; color: #1A1A1A;
-        font-family: 'Inter', sans-serif; }
+        font-family: 'IBM Plex Mono', 'IBM Plex Sans', monospace; }
     [data-testid="stMetricLabel"] { font-size: 10px; font-weight: 700; color: #6B7280;
         text-transform: uppercase; letter-spacing: 0.8px; }
     [data-testid="stMetricDelta"] { font-size: 11px; }
@@ -163,7 +163,7 @@ st.markdown("""
     .info-label { font-size: 10px; color: #9CA3AF; text-transform: uppercase;
         letter-spacing: 0.8px; font-weight: 700; margin-bottom: 2px; }
     .info-value { font-size: 15px; color: #1A1A1A; font-weight: 600;
-        font-family: 'Inter', sans-serif; }
+        font-family: 'IBM Plex Sans', sans-serif; }
     .info-source { font-size: 10px; color: #9CA3AF; margin-top: 2px; }
 
     /* Provenance card */
@@ -200,7 +200,7 @@ st.markdown("""
 PLOTLY_LAYOUT = dict(
     plot_bgcolor="#FFFFFF",
     paper_bgcolor="#FFFFFF",
-    font=dict(family="Inter, -apple-system, BlinkMacSystemFont, sans-serif", size=12, color="#1A1A1A"),
+    font=dict(family="IBM Plex Sans, -apple-system, BlinkMacSystemFont, sans-serif", size=12, color="#1A1A1A"),
     margin=dict(t=80, b=40, l=60, r=40),
     legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5,
                 font=dict(size=11), bgcolor="rgba(0,0,0,0)"),
@@ -661,7 +661,7 @@ with tab1:
             ".ag-row-even": {"background-color": "#FFFFFF !important"},
             ".ag-row-odd": {"background-color": "#F9FAFB !important"},
             ".ag-row-hover": {"background-color": "#F0F4E8 !important"},
-            ".ag-cell": {"font-size": "12px !important", "color": "#1A1A1A !important", "font-family": "'Inter', -apple-system, sans-serif !important"},
+            ".ag-cell": {"font-size": "12px !important", "color": "#1A1A1A !important", "font-family": "'IBM Plex Mono', 'IBM Plex Sans', sans-serif !important"},
             ".ag-root-wrapper": {"border": "1px solid #E5E7EB !important", "border-radius": "4px !important"},
             ".ag-pinned-left-cols-container .ag-cell": {"font-weight": "500 !important", "cursor": "pointer !important"},
         }
