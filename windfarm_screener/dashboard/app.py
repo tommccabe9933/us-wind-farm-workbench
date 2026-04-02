@@ -666,30 +666,33 @@ with tab1:
             ".ag-pinned-left-cols-container .ag-cell": {"font-weight": "500 !important", "cursor": "pointer !important"},
         }
 
-        grid_response = AgGrid(
-            ag_df, gridOptions=grid_options, custom_css=custom_css,
-            height=650, theme="alpine",
-            update_mode="SELECTION_CHANGED",
-        )
+        try:
+            grid_response = AgGrid(
+                ag_df, gridOptions=grid_options, custom_css=custom_css,
+                height=650, theme="alpine",
+                update_mode="SELECTION_CHANGED",
+            )
 
-        # Handle row selection for cross-tab navigation
-        selected_rows = grid_response.get("selected_rows", None)
-        if selected_rows is not None and len(selected_rows) > 0:
-            if isinstance(selected_rows, pd.DataFrame):
-                selected_name = selected_rows.iloc[0].get("Plant Name", "")
-            else:
-                selected_name = selected_rows[0].get("Plant Name", "")
-            if selected_name:
-                st.session_state["selected_plant"] = selected_name
-                # Auto-click the Plant Detail tab via JS (using html component which allows scripts)
-                import streamlit.components.v1 as components
-                components.html(
-                    """<script>
-                    const tabs = window.parent.document.querySelectorAll('[data-baseweb="tab"]');
-                    if (tabs.length > 1) { tabs[1].click(); }
-                    </script>""",
-                    height=0,
-                )
+            # Handle row selection for cross-tab navigation
+            selected_rows = grid_response.get("selected_rows", None)
+            if selected_rows is not None and len(selected_rows) > 0:
+                if isinstance(selected_rows, pd.DataFrame):
+                    selected_name = selected_rows.iloc[0].get("Plant Name", "")
+                else:
+                    selected_name = selected_rows[0].get("Plant Name", "")
+                if selected_name:
+                    st.session_state["selected_plant"] = selected_name
+                    import streamlit.components.v1 as components
+                    components.html(
+                        """<script>
+                        const tabs = window.parent.document.querySelectorAll('[data-baseweb="tab"]');
+                        if (tabs.length > 1) { tabs[1].click(); }
+                        </script>""",
+                        height=0,
+                    )
+        except Exception as e:
+            st.warning(f"Interactive table unavailable: {e}")
+            st.dataframe(ag_df, height=650, use_container_width=True, hide_index=True)
 
         # Column definitions
         with st.expander("Column Definitions"):
