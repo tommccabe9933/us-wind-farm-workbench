@@ -16,7 +16,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder
 # ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="U.S. Wind Farm Workbench",
-    page_icon="",
+    page_icon="🌬",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -27,17 +27,20 @@ st.set_page_config(
 @st.dialog("U.S. Wind Farm Workbench")
 def welcome_dialog():
     st.markdown(
-        '<div style="text-align:center;padding:8px 0 16px;">'
-        '<span style="font-size:40px;">⚡</span>'
+        '<div style="text-align:center;padding:12px 0 16px;">'
+        '<svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="47" y="38" width="6" height="56" rx="2" fill="#1A1A1A"/>'
+        '<rect x="43" y="92" width="14" height="4" rx="2" fill="#1A1A1A"/>'
+        '<circle cx="50" cy="38" r="5" fill="#1A1A1A"/>'
+        '<path d="M50 33 L48 4 Q50 2 52 4 Z" fill="#4A5D23"/>'
+        '<path d="M54 40 L80 55 Q80 58 77 57 Z" fill="#4A5D23"/>'
+        '<path d="M46 40 L20 55 Q20 58 23 57 Z" fill="#4A5D23"/>'
+        '</svg>'
         '</div>',
         unsafe_allow_html=True,
     )
     st.markdown(
         "**Every utility-scale wind farm in the United States — all 1,086 plants with nameplate capacity ≥ 10 MW.**"
-    )
-    st.markdown(
-        "This workbench covers the complete U.S. utility-scale wind fleet. "
-        "If it generates at least 10 MW of wind power in the United States, it is in this database."
     )
     st.markdown("---")
     st.markdown(
@@ -425,7 +428,17 @@ with st.sidebar:
 # ---------------------------------------------------------------------------
 st.markdown(
     '<div class="header-bar">'
-    '<h1>U.S. WIND FARM WORKBENCH</h1>'
+    '<h1>'
+    '<svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" '
+    'style="vertical-align:middle;margin-right:12px;margin-top:-2px;">'
+    '<rect x="47" y="38" width="6" height="56" rx="2" fill="#FFFFFF"/>'
+    '<rect x="43" y="92" width="14" height="4" rx="2" fill="#FFFFFF"/>'
+    '<circle cx="50" cy="38" r="5" fill="#FFFFFF"/>'
+    '<path d="M50 33 L48 4 Q50 2 52 4 Z" fill="#9CA3AF"/>'
+    '<path d="M54 40 L80 55 Q80 58 77 57 Z" fill="#9CA3AF"/>'
+    '<path d="M46 40 L20 55 Q20 58 23 57 Z" fill="#9CA3AF"/>'
+    '</svg>'
+    'U.S. WIND FARM WORKBENCH</h1>'
     '<div class="header-subtitle">U.S. Utility-Scale Wind Farms (&ge; 10 MW)&ensp;·&ensp;'
     'Sources: EIA-860, EIA-923, Electric Power Monthly, USWTDB, eGRID, LBNL&ensp;·&ensp;by Tom McCabe</div>'
     '<div class="header-badge">100% FEDERAL DATA · ZERO AI GENERATION</div>'
