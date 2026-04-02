@@ -33,11 +33,11 @@ def welcome_dialog():
         unsafe_allow_html=True,
     )
     st.markdown(
-        "**Screening every utility-scale wind farm in the United States.**"
+        "**Every utility-scale wind farm in the United States — all 1,086 plants with nameplate capacity ≥ 10 MW.**"
     )
     st.markdown(
-        "This workbench covers **1,086 wind plants** with nameplate capacity "
-        "≥ 10 MW — representing virtually the entire U.S. utility-scale wind fleet."
+        "This workbench covers the complete U.S. utility-scale wind fleet. "
+        "If it generates at least 10 MW of wind power in the United States, it is in this database."
     )
     st.markdown("---")
     st.markdown(
@@ -426,8 +426,8 @@ with st.sidebar:
 st.markdown(
     '<div class="header-bar">'
     '<h1>U.S. WIND FARM WORKBENCH</h1>'
-    '<div class="header-subtitle">For Dad &amp; Sequitur&ensp;·&ensp;U.S. Utility-Scale Wind Farms (&ge; 10 MW)&ensp;·&ensp;'
-    'Sources: EIA-860, EIA-923, Electric Power Monthly, USWTDB, eGRID, LBNL</div>'
+    '<div class="header-subtitle">U.S. Utility-Scale Wind Farms (&ge; 10 MW)&ensp;·&ensp;'
+    'Sources: EIA-860, EIA-923, Electric Power Monthly, USWTDB, eGRID, LBNL&ensp;·&ensp;by Tom McCabe</div>'
     '<div class="header-badge">100% FEDERAL DATA · ZERO AI GENERATION</div>'
     '</div>', unsafe_allow_html=True
 )
@@ -435,18 +435,16 @@ st.markdown(
 # KPI strip
 if not filtered.empty:
     st.markdown("")
-    k1, k2, k3, k4, k5, k6 = st.columns(6)
+    k1, k2, k3, k4, k5 = st.columns(5)
     k1.metric("Plants", f"{len(filtered):,}")
     if CAP_COL in filtered.columns:
         k2.metric("Total Capacity", f"{filtered[CAP_COL].sum():,.0f} MW")
     if "cf_3yr_2022_2024" in filtered.columns:
         k3.metric("Median Capacity Factor", f"{filtered['cf_3yr_2022_2024'].median():.1f}%")
-    if "distress_signal_count" in filtered.columns:
-        k4.metric("Median Distress Signals", f"{filtered['distress_signal_count'].median():.0f} / 10")
     if "flag_ptc_expired" in filtered.columns:
-        k5.metric("Tax Credit Expired", f"{filtered['flag_ptc_expired'].sum():,}")
+        k4.metric("Tax Credit Expired", f"{filtered['flag_ptc_expired'].sum():,}")
     if "flag_repower_candidate" in filtered.columns:
-        k6.metric("Repower Candidates", f"{filtered['flag_repower_candidate'].sum():,}")
+        k5.metric("Repower Candidates", f"{filtered['flag_repower_candidate'].sum():,}")
 
 st.markdown("---")
 
