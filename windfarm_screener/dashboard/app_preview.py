@@ -2,7 +2,8 @@
 Wind Farm Deal Desk — Distressed Wind Farm Investment Screener
 Institutional-grade dashboard for screening U.S. wind farms for PE acquisition.
 
-Mintlify design system with atmospheric green-to-white renewable energy palette.
+PREVIEW: Mintlify design system adapted with atmospheric green-to-white renewable energy palette.
+Run with: streamlit run app_preview.py
 """
 
 import streamlit as st
