@@ -3,9 +3,15 @@
   "configurations": [
     {
       "name": "streamlit",
-      "runtimeExecutable": "streamlit",
+      "runtimeExecutable": "/opt/anaconda3/bin/streamlit",
       "runtimeArgs": ["run", "windfarm_screener/dashboard/app.py", "--server.port", "8501", "--server.headless", "true"],
       "port": 8501
+    },
+    {
+      "name": "streamlit-preview",
+      "runtimeExecutable": "/opt/anaconda3/bin/streamlit",
+      "runtimeArgs": ["run", "windfarm_screener/dashboard/app_preview.py", "--server.port", "8502", "--server.headless", "true"],
+      "port": 8502
     }
   ]
 }
