@@ -75,6 +75,7 @@ def welcome_dialog():
         st.rerun()
 
 if "welcome_dismissed" not in st.session_state:
+    st.session_state["welcome_dismissed"] = True
     welcome_dialog()
 
 # ---------------------------------------------------------------------------
