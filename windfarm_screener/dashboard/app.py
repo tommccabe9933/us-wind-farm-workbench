@@ -13,6 +13,8 @@ import plotly.express as px
 from pathlib import Path
 # AgGrid removed — using native st.dataframe for Cloud compatibility
 import base64
+import folium
+from streamlit_folium import st_folium
 
 # ---------------------------------------------------------------------------
 # Logo — embedded base64 (transparent PNG)
@@ -727,69 +729,102 @@ with tab_map:
         map_df["Status"] = map_df["_distress_n"].map(
             lambda n: "Distressed" if n >= 2 else ("Watch" if n == 1 else "Healthy"))
 
-        # Marker size column (capacity, with floor so small plants are visible)
-        size_col = CAP_COL if CAP_COL in map_df.columns else None
-        if size_col:
-            map_df["_size"] = map_df[size_col].fillna(10).clip(lower=10)
-
-        # Hover columns
-        hover_cols = {}
-        if size_col:
-            hover_cols[size_col] = ":.0f"
-        hover_cols["state"] = True
-        if "nerc_region" in map_df.columns:
-            hover_cols["nerc_region"] = True
-        if "turbine_count" in map_df.columns:
-            hover_cols["turbine_count"] = True
-        if "cf_3yr_2022_2024" in map_df.columns:
-            hover_cols["cf_3yr_2022_2024"] = ":.1f"
-        hover_cols["_distress_n"] = True
-
         color_map = {"Healthy": "#2E8B57", "Watch": "#6B7280", "Distressed": "#0d0d0d"}
-        cat_order = {"Status": ["Healthy", "Watch", "Distressed"]}
 
-        fig_map = px.scatter_mapbox(
-            map_df,
-            lat="latitude",
-            lon="longitude",
-            hover_name="plant_name",
-            hover_data=hover_cols,
-            size="_size" if size_col else None,
-            size_max=25,
-            color="Status",
-            color_discrete_map=color_map,
-            category_orders=cat_order,
-            mapbox_style="open-street-map",
-            zoom=3.5,
-            center={"lat": 39, "lon": -98},
-            height=650,
+        # Build folium map — no default tiles, add switchable layers
+        m = folium.Map(
+            location=[39.8, -98.6],
+            zoom_start=4,
+            tiles=None,
+            min_zoom=3,
+            max_bounds=True,
+            max_bounds_viscosity=1.0,
         )
-        fig_map.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            margin=dict(t=0, b=0, l=0, r=0),
-            legend=dict(
-                orientation="h", yanchor="top", y=1.02, xanchor="center", x=0.5,
-                font=dict(family="Inter, sans-serif", size=12, color="#0d0d0d"),
-                bgcolor="rgba(255,255,255,0.85)",
-                bordercolor="rgba(0,0,0,0.08)", borderwidth=1,
-            ),
-            hoverlabel=dict(bgcolor="#0d0d0d", font_size=12, font_color="white"),
-        )
-        # Rename hover fields for readability
-        fig_map.update_traces(
-            hovertemplate=(
-                "<b>%{hovertext}</b><br>"
-                "Capacity: %{customdata[0]:.0f} MW<br>"
-                "State: %{customdata[1]}<br>"
-                "NERC: %{customdata[2]}<br>"
-                "Turbines: %{customdata[3]}<br>"
-                "Capacity Factor: %{customdata[4]:.1f}%<br>"
-                "Distress Flags: %{customdata[5]}"
-                "<extra></extra>"
-            ) if size_col and "cf_3yr_2022_2024" in map_df.columns else None,
-        )
-        st.plotly_chart(fig_map, use_container_width=True)
+        # Tile layers — user can switch between these (first added with show=True is default)
+        folium.TileLayer(
+            tiles="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+            attr="CartoDB",
+            name="Light",
+            overlay=False,
+            control=True,
+            show=True,
+        ).add_to(m)
+        folium.TileLayer(
+            tiles="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+            attr="CartoDB",
+            name="Dark",
+            overlay=False,
+            control=True,
+            show=False,
+        ).add_to(m)
+        folium.TileLayer(
+            tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            attr="Esri",
+            name="Satellite",
+            overlay=False,
+            control=True,
+            show=False,
+        ).add_to(m)
+        folium.TileLayer(
+            tiles="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+            attr="OpenTopoMap",
+            name="Terrain",
+            overlay=False,
+            control=True,
+            show=False,
+        ).add_to(m)
+
+        # Add circle markers for each plant
+        has_owner = "owner_name" in map_df.columns
+        has_cap = CAP_COL in map_df.columns
+        has_cf = "cf_3yr_2022_2024" in map_df.columns
+        has_nerc = "nerc_region" in map_df.columns
+        has_turbines = "turbine_count" in map_df.columns
+
+        for _, row in map_df.iterrows():
+            status = row["Status"]
+            fill_color = color_map.get(status, "#6B7280")
+            name = row.get("plant_name", "Unknown")
+            owner = row.get("owner_name", "N/A") if has_owner else "N/A"
+            cap = f"{row[CAP_COL]:,.0f} MW" if has_cap and pd.notna(row[CAP_COL]) else "N/A"
+            state = row.get("state", "N/A")
+            nerc = row.get("nerc_region", "N/A") if has_nerc else "N/A"
+            turbines = f"{int(row['turbine_count']):,}" if has_turbines and pd.notna(row.get("turbine_count")) else "N/A"
+            cf = f"{row['cf_3yr_2022_2024']:.1f}%" if has_cf and pd.notna(row.get("cf_3yr_2022_2024")) else "N/A"
+            flags = int(row["_distress_n"])
+
+            popup_html = (
+                f"<div style='font-family:Inter,sans-serif;font-size:12px;min-width:200px;'>"
+                f"<b style='font-size:13px;'>{name}</b><br>"
+                f"<b>Owner:</b> {owner}<br>"
+                f"<b>Capacity:</b> {cap}<br>"
+                f"<b>State:</b> {state}<br>"
+                f"<b>NERC:</b> {nerc}<br>"
+                f"<b>Turbines:</b> {turbines}<br>"
+                f"<b>Capacity Factor:</b> {cf}<br>"
+                f"<b>Status:</b> {status} ({flags} flag{'s' if flags != 1 else ''})"
+                f"</div>"
+            )
+
+            folium.CircleMarker(
+                location=[row["latitude"], row["longitude"]],
+                radius=5,
+                color=fill_color,
+                fill=True,
+                fill_color=fill_color,
+                fill_opacity=0.75,
+                weight=1,
+                popup=folium.Popup(popup_html, max_width=280),
+                tooltip=name,
+            ).add_to(m)
+
+        # Layer control toggle (top-right)
+        folium.LayerControl(collapsed=False).add_to(m)
+
+        # Fit to continental US bounds
+        m.fit_bounds([[24.5, -125.0], [49.5, -66.5]])
+
+        st_folium(m, use_container_width=True, height=650, returned_objects=[])
 
         # Summary stats below map
         n_healthy = (map_df["Status"] == "Healthy").sum()
