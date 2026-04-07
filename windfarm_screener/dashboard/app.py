@@ -427,6 +427,9 @@ st.markdown("""
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
+    /* Map container */
+    .js-plotly-plot .mapboxgl-map { border-radius: 16px; }
+
     /* Hide Streamlit branding */
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
@@ -703,7 +706,99 @@ st.markdown("---")
 # ---------------------------------------------------------------------------
 # Tabs
 # ---------------------------------------------------------------------------
-tab1, tab2, tab3, tab4 = st.tabs(["SCREENER TABLE", "PLANT DETAIL", "MARKET OVERVIEW", "TRENDS"])
+tab_map, tab1, tab2, tab3, tab4 = st.tabs(["MAP", "SCREENER TABLE", "PLANT DETAIL", "MARKET OVERVIEW", "TRENDS"])
+
+# ========================== TAB 0: Interactive Map ============================
+with tab_map:
+    if filtered.empty:
+        st.info("No plants match the current filters.")
+    elif "latitude" not in filtered.columns or "longitude" not in filtered.columns:
+        st.warning("Location data not available.")
+    else:
+        # Compute distress score per plant
+        _dflags = [c for c in filtered.columns if c in [
+            "flag_declining_3yr", "flag_bottom_quartile", "flag_below_peak",
+            "flag_consecutive_decline", "flag_ptc_expired"]]
+        map_df = filtered.dropna(subset=["latitude", "longitude"]).copy()
+        if _dflags:
+            map_df["_distress_n"] = map_df[_dflags].sum(axis=1).astype(int)
+        else:
+            map_df["_distress_n"] = 0
+        map_df["Status"] = map_df["_distress_n"].map(
+            lambda n: "Distressed" if n >= 2 else ("Watch" if n == 1 else "Healthy"))
+
+        # Marker size column (capacity, with floor so small plants are visible)
+        size_col = CAP_COL if CAP_COL in map_df.columns else None
+        if size_col:
+            map_df["_size"] = map_df[size_col].fillna(10).clip(lower=10)
+
+        # Hover columns
+        hover_cols = {}
+        if size_col:
+            hover_cols[size_col] = ":.0f"
+        hover_cols["state"] = True
+        if "nerc_region" in map_df.columns:
+            hover_cols["nerc_region"] = True
+        if "turbine_count" in map_df.columns:
+            hover_cols["turbine_count"] = True
+        if "cf_3yr_2022_2024" in map_df.columns:
+            hover_cols["cf_3yr_2022_2024"] = ":.1f"
+        hover_cols["_distress_n"] = True
+
+        color_map = {"Healthy": "#2E8B57", "Watch": "#6B7280", "Distressed": "#0d0d0d"}
+        cat_order = {"Status": ["Healthy", "Watch", "Distressed"]}
+
+        fig_map = px.scatter_mapbox(
+            map_df,
+            lat="latitude",
+            lon="longitude",
+            hover_name="plant_name",
+            hover_data=hover_cols,
+            size="_size" if size_col else None,
+            size_max=25,
+            color="Status",
+            color_discrete_map=color_map,
+            category_orders=cat_order,
+            mapbox_style="open-street-map",
+            zoom=3.5,
+            center={"lat": 39, "lon": -98},
+            height=650,
+        )
+        fig_map.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            margin=dict(t=0, b=0, l=0, r=0),
+            legend=dict(
+                orientation="h", yanchor="top", y=1.02, xanchor="center", x=0.5,
+                font=dict(family="Inter, sans-serif", size=12, color="#0d0d0d"),
+                bgcolor="rgba(255,255,255,0.85)",
+                bordercolor="rgba(0,0,0,0.08)", borderwidth=1,
+            ),
+            hoverlabel=dict(bgcolor="#0d0d0d", font_size=12, font_color="white"),
+        )
+        # Rename hover fields for readability
+        fig_map.update_traces(
+            hovertemplate=(
+                "<b>%{hovertext}</b><br>"
+                "Capacity: %{customdata[0]:.0f} MW<br>"
+                "State: %{customdata[1]}<br>"
+                "NERC: %{customdata[2]}<br>"
+                "Turbines: %{customdata[3]}<br>"
+                "Capacity Factor: %{customdata[4]:.1f}%<br>"
+                "Distress Flags: %{customdata[5]}"
+                "<extra></extra>"
+            ) if size_col and "cf_3yr_2022_2024" in map_df.columns else None,
+        )
+        st.plotly_chart(fig_map, use_container_width=True)
+
+        # Summary stats below map
+        n_healthy = (map_df["Status"] == "Healthy").sum()
+        n_watch = (map_df["Status"] == "Watch").sum()
+        n_distressed = (map_df["Status"] == "Distressed").sum()
+        s1, s2, s3 = st.columns(3)
+        s1.metric("Healthy", f"{n_healthy:,}")
+        s2.metric("Watch", f"{n_watch:,}")
+        s3.metric("Distressed", f"{n_distressed:,}")
 
 # ========================== TAB 1: Screener Table ============================
 with tab1:
