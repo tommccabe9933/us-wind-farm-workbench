@@ -23,7 +23,7 @@ LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAAAh0AAAFGCAYAAADOwS1OAACtzUlEQVR4nOydeZwU1bn3
 # Page config
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="U.S. Wind Farm Workbench",
+    page_title="U.S. Wind Farm Sourcing Tool",
     page_icon="🌬",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -32,7 +32,7 @@ st.set_page_config(
 # ---------------------------------------------------------------------------
 # Welcome dialog — shown once per session
 # ---------------------------------------------------------------------------
-@st.dialog("U.S. Wind Farm Workbench")
+@st.dialog("U.S. Wind Farm Sourcing Tool")
 def welcome_dialog():
     st.markdown(
         f'<div style="text-align:center;padding:12px 0 16px;">'
@@ -127,6 +127,10 @@ st.markdown("""
         color: #0d0d0d;
     }
 
+    /* Kill Streamlit's default top padding */
+    [data-testid="stMainBlockContainer"] { padding-top: 16px !important; }
+    [data-testid="stHeader"] { background: transparent !important; }
+
     /* Sidebar — near-black panel, all elements light */
     section[data-testid="stSidebar"] {
         background-color: #0d0d0d;
@@ -190,7 +194,7 @@ st.markdown("""
     /* Header hero — transparent, gradient comes from page bg */
     .header-hero {
         background: transparent;
-        padding: 48px 32px 32px;
+        padding: 12px 32px 24px;
         margin: -1rem -1rem 0 -1rem;
         position: relative;
         overflow: hidden;
@@ -205,8 +209,9 @@ st.markdown("""
     }
     .header-hero-inner { position: relative; max-width: 800px; }
     .hero-logo {
-        height: 80px;
-        margin-bottom: 24px;
+        display: block;
+        height: 110px;
+        margin-bottom: 28px;
         opacity: 1;
     }
     .hero-badge {
@@ -241,7 +246,7 @@ st.markdown("""
         font-size: 12px; font-weight: 500; color: #999999;
         text-transform: uppercase; letter-spacing: 0.8px;
         border-radius: 8px 8px 0 0 !important;
-        transition: color 0.15s ease, background 0.15s ease;
+        transition: color 0.2s ease, background 0.2s ease, border-bottom 0.2s ease;
     }
     .stTabs [data-baseweb="tab"]:hover { color: #0d0d0d; background: rgba(0,0,0,0.02); }
     .stTabs [data-baseweb="tab"][aria-selected="true"] {
@@ -334,6 +339,92 @@ st.markdown("""
     [data-baseweb="select"] > div { border-radius: 10px !important; }
     [data-baseweb="popover"] > div { border-radius: 12px !important; }
     [data-baseweb="input"] { border-radius: 10px !important; }
+
+    /* ================================================================
+       MICRO-INTERACTIONS — smooth, modern transitions
+       ================================================================ */
+
+    /* Fade-in for page content */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    [data-testid="stMainBlockContainer"] > div > div {
+        animation: fadeIn 0.3s ease;
+    }
+
+    /* Buttons — lift on hover, press on click */
+    .stButton > button {
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+    }
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .stButton > button:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+
+    /* Cards — lift on hover */
+    .info-card, .provenance-card {
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .info-card:hover, .provenance-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+    }
+
+    /* KPI metrics — subtle lift */
+    [data-testid="stMetric"] {
+        transition: transform 0.2s ease;
+    }
+    [data-testid="stMetric"]:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Sidebar dropdowns — brighten on hover */
+    section[data-testid="stSidebar"] [data-baseweb="select"] > div {
+        transition: border-color 0.2s ease, background 0.2s ease !important;
+    }
+    section[data-testid="stSidebar"] [data-baseweb="select"] > div:hover {
+        border-color: rgba(255,255,255,0.4) !important;
+        background: rgba(255,255,255,0.15) !important;
+    }
+
+    /* Sidebar checkboxes — subtle feedback */
+    section[data-testid="stSidebar"] .stCheckbox {
+        transition: opacity 0.2s ease;
+    }
+    section[data-testid="stSidebar"] .stCheckbox:hover {
+        opacity: 0.85;
+    }
+
+    /* Sidebar slider thumb — grow on hover */
+    section[data-testid="stSidebar"] .stSlider [role="slider"] {
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+    section[data-testid="stSidebar"] .stSlider [role="slider"]:hover {
+        transform: scale(1.2);
+        box-shadow: 0 0 8px rgba(46,139,87,0.4);
+    }
+
+    /* Badges — subtle lift */
+    .badge-black, .badge-gray, .badge-olive {
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .badge-black:hover, .badge-gray:hover, .badge-olive:hover {
+        opacity: 0.85;
+        transform: translateY(-1px);
+    }
+
+    /* Expander — smooth open/close */
+    .stExpander {
+        transition: box-shadow 0.2s ease;
+    }
+    .stExpander:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
 
     /* Hide Streamlit branding */
     #MainMenu { visibility: hidden; }
@@ -579,7 +670,7 @@ st.markdown(
     '<div class="header-hero-inner">'
     f'<img src="data:image/png;base64,{LOGO_B64}" alt="Wind Farm Logo" class="hero-logo"/>'
     '<div class="hero-badge">SOURCED 100% FEDERAL DATA</div>'
-    '<h1 class="hero-title">U.S. Wind Farm Workbench</h1>'
+    '<h1 class="hero-title">U.S. Wind Farm Sourcing Tool</h1>'
     '<p class="hero-subtitle">Utility-scale wind farms ≥ 10 MW · EIA-860, EIA-923, Electric Power Monthly, USWTDB, eGRID, LBNL · by Tom McCabe</p>'
     '</div>'
     '</div>',
@@ -593,12 +684,18 @@ if not filtered.empty:
     k1.metric("Plants", f"{len(filtered):,}")
     if CAP_COL in filtered.columns:
         k2.metric("Total Capacity", f"{filtered[CAP_COL].sum():,.0f} MW")
+    if "gen_mwh_2024" in filtered.columns:
+        total_gwh = filtered["gen_mwh_2024"].sum() / 1000
+        k3.metric("Total Production (2024)", f"{total_gwh:,.0f} GWh")
     if "cf_3yr_2022_2024" in filtered.columns:
-        k3.metric("Median Capacity Factor", f"{filtered['cf_3yr_2022_2024'].median():.1f}%")
-    if "flag_ptc_expired" in filtered.columns:
-        k4.metric("Tax Credit Expired", f"{filtered['flag_ptc_expired'].sum():,}")
-    if "flag_repower_candidate" in filtered.columns:
-        k5.metric("Repower Candidates", f"{filtered['flag_repower_candidate'].sum():,}")
+        k4.metric("Median Capacity Factor", f"{filtered['cf_3yr_2022_2024'].median():.1f}%")
+    # Distressed candidates: plants with 2+ distress flags
+    distress_flags = [c for c in filtered.columns if c.startswith("flag_") and c in [
+        "flag_declining_3yr", "flag_bottom_quartile", "flag_below_peak",
+        "flag_consecutive_decline", "flag_ptc_expired"]]
+    if distress_flags:
+        n_distressed = (filtered[distress_flags].sum(axis=1) >= 2).sum()
+        k5.metric("Distressed Candidates", f"{n_distressed:,}")
 
 st.markdown("---")
 
